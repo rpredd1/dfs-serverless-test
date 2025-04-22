@@ -1,0 +1,16 @@
+name: Code Scan
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches:
+      - np
+      - main
+
+jobs:
+  secret-scanning:
+    uses: bayer-int/actions-workflows/.github/workflows/secret-scanning.yml@main
+
+  sonarqube:
+    uses: bayer-int/actions-workflows/.github/workflows/sonarqube.yml@main
+    secrets:
+      SONAR_TOKEN: 

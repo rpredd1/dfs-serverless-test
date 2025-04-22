@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    versioning-strategy: increase-if-necessary
+
+  - package-ecosystem: "terraform"
+    directory: "/"
+    ignore:
+      - dependency-name: "lambda::github::bayer-int/tlp-terraform-modules"
+      - dependency-name: "gw::github::bayer-int/tlp-terraform-modules"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    ignore:
+      - dependency-name: "bayer-int/tlp-actions"
+      - dependency-name: "bayer-int/terraform-action-init"
+    schedule:
+      interval: "monthly"

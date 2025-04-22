@@ -1,0 +1,62 @@
+name: Deployment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+permissions:
+  contents: 'read'
+  id-token: 'write'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Git
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github-oidc-role
+          aws-region: "us-east-1"
+
+      - name: Prepare GH Config
+        run: |
+          git config --global credential.helper 'store --file ~/.git-credentials'
+          git config --global url."https://token:${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}@github.com/bayer-int".insteadOf https://github.com/bayer-int
+        shell: bash
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check -recursive -diff
+        continue-on-error: true
+
+      # Configures s3 backend state
+      - name: Terraform Init
+        uses: bayer-int/terraform-action-init@v3
+        id: init
+        with:
+          use_ssm: true # pulls, bucket name, region, kms_key_id, and locking table from ssm
+          upload: false # Default, uploads the .terraform and .terraform.lock.hcl as artifacts
+          state: terraform # The name of the statefile without the .tfstate extension
+          s3_prefix: "my-api-glgxj/"
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false -var-file=environments/${{ inputs.environment }}.tfvars -var="role=${{ vars.DEPLOY_ROLE_ARN }}"
+
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve -input=false -var-file=environments/${{ inputs.environment }}.tfvars -var="role=${{ vars.DEPLOY_ROLE_ARN }}"

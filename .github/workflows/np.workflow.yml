@@ -1,0 +1,22 @@
+name: Deploy API to NP
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - np
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy.yml
+    secrets: inherit
+    with:
+      environment: np
+
+
+
+
