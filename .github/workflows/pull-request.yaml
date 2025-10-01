@@ -59,7 +59,7 @@ jobs:
         run: terraform plan -no-color -var-file=environments/${{ github.base_ref == 'main' && 'prod' || 'np' }}.tfvars -var=role=${{ vars.DEPLOY_ROLE_ARN }}
         continue-on-error: true
 
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
